@@ -13,3 +13,292 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+// ...existing code...
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model CustomerAddress {
+  id        String   @id @default(cuid())
+  customerId String
+  customer  CustomerProfile @relation(fields: [customerId], references: [id])
+  address   String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+}
+
+// ...existing code...
+// Users e Autenticação
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  name        String
+  phone       String?
+  userType    UserType @default(CUSTOMER)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relacionamentos
+  customerProfile  CustomerProfile?
+  restaurantProfile RestaurantProfile?
+  orders          Order[]
+  notifications   Notification[]
+}
+
+model CustomerProfile {
+  id       String @id @default(cuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id])
+  
+  favoriteRestaurants Restaurant[]
+  addresses           CustomerAddress[]
+}
+
+model RestaurantProfile {
+  id          String @id @default(cuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id])
+  
+  restaurant  Restaurant?
+}
+
+// Restaurantes
+model Restaurant {
+  id          String  @id @default(cuid())
+  ownerId     String  @unique
+  owner       RestaurantProfile @relation(fields: [ownerId], references: [id])
+  
+  name        String
+  description String?
+  phone       String
+  email       String?
+  cnpj        String? @unique
+  
+  // Localização
+  address     String
+  latitude    Float
+  longitude   Float
+  
+  // Status
+  isActive    Boolean @default(true)
+  isVerified  Boolean @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relacionamentos
+  hours       RestaurantHours[]
+  menus       Menu[]
+  orders      Order[]
+  customers   CustomerProfile[]
+}
+
+model RestaurantHours {
+  id           String @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  
+  dayOfWeek    Int // 0=domingo, 1=segunda...
+  openTime     String // "08:00"
+  closeTime    String // "22:00"
+  isOpen       Boolean @default(true)
+}
+
+// Cardápios
+model Menu {
+  id           String @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  
+  name         String @default("Cardápio Principal")
+  isActive     Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  categories   MenuCategory[]
+  items        MenuItem[]
+  uploads      MenuUpload[]
+}
+
+model MenuCategory {
+  id       String @id @default(cuid())
+  menuId   String
+  menu     Menu   @relation(fields: [menuId], references: [id])
+  
+  name     String
+  order    Int    @default(0)
+  
+  items    MenuItem[]
+}
+
+model MenuItem {
+  id          String @id @default(cuid())
+  menuId      String
+  menu        Menu   @relation(fields: [menuId], references: [id])
+  categoryId  String?
+  category    MenuCategory? @relation(fields: [categoryId], references: [id])
+  
+  name        String
+  description String?
+  price       Decimal
+  isAvailable Boolean @default(true)
+  order       Int     @default(0)
+  
+  // Metadata da IA
+  extractedById String? // Adicione este campo
+  extractedBy   AIProcessingJob? @relation(fields: [extractedById], references: [id])
+  confidence    Float?  // Confiança da IA na extração
+
+  
+  orderItems  OrderItem[]
+}
+
+model MenuUpload {
+  id           String @id @default(cuid())
+  menuId       String
+  menu         Menu   @relation(fields: [menuId], references: [id])
+  
+  originalName String
+  s3Key        String
+  s3Url        String
+  fileType     String // PDF, JPG, PNG
+  fileSize     Int
+  
+  status       UploadStatus @default(PENDING)
+  
+  createdAt    DateTime @default(now())
+  processedAt  DateTime?
+  
+  aiJob        AIProcessingJob?
+}
+
+// IA Processing
+model AIProcessingJob {
+  id           String @id @default(cuid())
+  uploadId     String @unique
+  upload       MenuUpload @relation(fields: [uploadId], references: [id])
+  
+  status       AIJobStatus @default(PENDING)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  
+  // Resultados
+  extractedText String?
+  structuredData Json? // JSON com itens extraídos
+  confidence   Float?
+  errorMessage String?
+  
+  // Itens criados
+  createdItems MenuItem[]
+}
+
+// Pedidos
+model Order {
+  id           String @id @default(cuid())
+  customerId   String
+  customer     User   @relation(fields: [customerId], references: [id])
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  
+  orderNumber  String @unique
+  status       OrderStatus @default(PENDING)
+  
+  subtotal     Decimal
+  deliveryFee  Decimal @default(0)
+  total        Decimal
+  
+  // Retirada
+  pickupTime   DateTime?
+  customerNotes String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  items        OrderItem[]
+  payment      Payment?
+}
+
+model OrderItem {
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id])
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  
+  quantity   Int
+  unitPrice  Decimal
+  totalPrice Decimal
+  notes      String?
+}
+
+// Pagamentos
+model Payment {
+  id        String @id @default(cuid())
+  orderId   String @unique
+  order     Order  @relation(fields: [orderId], references: [id])
+  
+  amount    Decimal
+  method    PaymentMethod
+  status    PaymentStatus @default(PENDING)
+  
+  // Gateway específico
+  gatewayTransactionId String?
+  gatewayResponse      Json?
+  
+  createdAt DateTime @default(now())
+  paidAt    DateTime?
+}
+
+// Enums
+enum UserType {
+  CUSTOMER
+  RESTAURANT_OWNER
+}
+
+enum UploadStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum AIJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REFUNDED
+}
