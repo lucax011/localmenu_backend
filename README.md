@@ -9,8 +9,7 @@ O LocaMenu Backend é uma API REST desenvolvida em NestJS que serve duas aplica�
 - **App B2B**: Restaurantes gerenciam cardápios e pedidos
 
 ### 🏗️ Arquitetura
-
-
+<img width="760" height="512" alt="arquitetura" src="https://github.com/user-attachments/assets/55b105bc-413d-41c8-9f3b-fa836333b212" />
 
 ## 🚀 Tecnologias
 
