@@ -1,0 +1,17 @@
+// menu/dto/menu-upload.dto.ts
+export class MenuUploadDto {
+  @IsString()
+  originalName: string;
+
+  @IsString()
+  s3Key: string;
+
+  @IsString()
+  s3Url: string;
+
+  @IsEnum(['PDF', 'JPG', 'PNG', 'JPEG'])
+  fileType: string;
+
+  @IsNumber()
+  fileSize: number;
+}

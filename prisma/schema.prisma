@@ -13,7 +13,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-// ...existing code...
 
 model Notification {
   id        String   @id @default(cuid())
