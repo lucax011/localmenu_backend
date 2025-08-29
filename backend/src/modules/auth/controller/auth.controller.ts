@@ -1,6 +1,7 @@
 import { UnauthorizedException, Post, Body, Controller } from '@nestjs/common';
 import { LoginDto } from '../dto/login.dto';
 import { AuthService } from '../services/auth.service';
+import { PasswordResetService } from '../services/passwordReset.service';
 import { RegisterDto } from '../dto/register.dto';
 import { UserService } from '../../users/services/user.services';
 
@@ -10,6 +11,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly passwordResetService: PasswordResetService,
   ) {}
 
   @Post('login')
@@ -27,11 +29,11 @@ export class AuthController {
   
   @Post('forgot-password')
   async forgotPassword(@Body('email') email: string) {
-    return { message: 'Se o email existir, enviaremos instruções.' };
+    return this.passwordResetService.requestReset(email);
   }
 
   @Post('reset-password')
   async resetPassword(@Body() dto: { token: string; newPassword: string }) {
-    return { message: 'Senha redefinida com sucesso.' };
-}
+    return this.passwordResetService.resetPassword(dto.token, dto.newPassword);
+  }
 }
