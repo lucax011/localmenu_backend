@@ -32,8 +32,14 @@ model CustomerAddress {
   longitude Float
   createdAt DateTime @default(now())
 }
-
-// ...existing code...
+model PasswordResetToken {
+  id           String   @id @default(uuid())
+  userId       String
+  token        String   @unique
+  createdAt    DateTime @default(now())
+  used         Boolean  @default(false)
+  user         User     @relation(fields: [userId], references: [id])
+}
 // Users e Autenticação
 model User {
   id          String   @id @default(cuid())
@@ -45,12 +51,13 @@ model User {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // Relacionamentos
   customerProfile  CustomerProfile?
   restaurantProfile RestaurantProfile?
   orders          Order[]
   notifications   Notification[]
+  passwordResetTokens PasswordResetToken[] 
 }
 
 model CustomerProfile {

@@ -1,7 +1,5 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsEnum,IsBoolean } from 'class-validator';
-// import { UserType } from '../enums/userType.enum'; // Corrigiremos abaixo
+import { IsEmail, IsString, MinLength, IsOptional, IsEnum, IsBoolean } from 'class-validator';
 
-// users/dto/update-user.dto.ts
 export class UpdateUserDto {
   @IsOptional()
   @IsString()
@@ -14,4 +12,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string; 
 }
