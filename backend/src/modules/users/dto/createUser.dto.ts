@@ -1,5 +1,5 @@
 import { IsEmail, IsString, MinLength, IsOptional, IsEnum,IsBoolean } from 'class-validator';
-import { UserType } from '../enum/userType.enum'; // Corrigiremos abaixo
+import { UserType } from '@prisma/client'; // Corrigiremos abaixo
 
 // users/dto/create-user.dto.ts
 export class CreateUserDto {

@@ -1,4 +1,10 @@
 // orders/dto/order-response.dto.ts
+import { OrderStatus } from '../entities/enumEntityOrder.dto';
+import { UserResponseDto } from '../../users/dto/userResponse.dto';
+import { RestaurantResponseDto } from '../../restaurants/dto/restauranteResponse.dto';
+import { OrderItemResponseDto } from './orderItemResponse.dto';
+import { PaymentResponseDto } from '../../payments/dto/paymentResponse.dto';
+
 export class OrderResponseDto {
   id: string;
   orderNumber: string;

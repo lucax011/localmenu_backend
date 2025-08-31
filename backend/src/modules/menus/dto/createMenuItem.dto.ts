@@ -1,3 +1,6 @@
+import { IsString ,MinLength, IsOptional,IsNumber , Min, IsBoolean } from "class-validator";
+import { Transform } from "class-transformer";
+
 // menu/dto/create-menu-item.dto.ts
 export class CreateMenuItemDto {
   @IsString()

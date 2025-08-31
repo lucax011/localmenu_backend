@@ -1,3 +1,5 @@
+import { IsString, IsEnum, IsNumber } from "class-validator";
+
 // menu/dto/menu-upload.dto.ts
 export class MenuUploadDto {
   @IsString()
@@ -10,7 +12,7 @@ export class MenuUploadDto {
   s3Url: string;
 
   @IsEnum(['PDF', 'JPG', 'PNG', 'JPEG'])
-  fileType: string;
+  fileType: 'PDF' | 'JPG' | 'PNG' | 'JPEG';
 
   @IsNumber()
   fileSize: number;

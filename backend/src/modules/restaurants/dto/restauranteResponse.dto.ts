@@ -1,4 +1,8 @@
 // restaurants/dto/restaurant-response.dto.ts
+// DTO de saída: não usar decorators de validação aqui (somente tipagem)
+import { RestaurantHoursResponseDto } from './restaurantHoursResponse.dto';
+import { MenuResponseDto } from '../../menus/dto/menuResponse.dto';
+
 export class RestaurantResponseDto {
   id: string;
   name: string;
@@ -12,10 +16,8 @@ export class RestaurantResponseDto {
   isActive: boolean;
   isVerified: boolean;
   createdAt: Date;
-  
-  @IsOptional()
+
+  // Relacionamentos opcionais agregados
   hours?: RestaurantHoursResponseDto[];
-  
-  @IsOptional()
   menus?: MenuResponseDto[];
 }

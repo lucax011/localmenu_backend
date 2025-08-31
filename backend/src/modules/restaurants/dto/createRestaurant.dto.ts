@@ -1,3 +1,5 @@
+import { IsString, IsNumber, Min,IsOptional , MinLength, IsEmail, Max } from 'class-validator';
+
 // restaurants/dto/create-restaurant.dto.ts
 export class CreateRestaurantDto {
   @IsString()

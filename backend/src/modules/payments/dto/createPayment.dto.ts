@@ -1,3 +1,6 @@
+import { IsString, IsNumber, Min, IsEnum, IsOptional } from 'class-validator';
+import { PaymentMethod } from '@prisma/client';
+
 // payments/dto/create-payment.dto.ts
 export class CreatePaymentDto {
   @IsString()

@@ -1,3 +1,7 @@
+import { IsString, IsArray, ValidateNested, IsOptional, IsDateString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateOrderItemDto } from './createOrderItem.dto';
+
 export class CreateOrderDto {
   @IsString()
   restaurantId: string;

@@ -1,5 +1,5 @@
 import { IsEmail, IsString, IsOptional, IsEnum,Length } from 'class-validator';
-import { UserType } from '../../users/enum/userType.enum';
+import { UserType } from '@prisma/client';
 
 // auth/dto/registerDto.ts
 export class RegisterDto {
