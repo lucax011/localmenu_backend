@@ -8,7 +8,6 @@ import * as bcrypt from 'bcrypt';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
   }
@@ -27,18 +26,18 @@ export class UserService {
   async findAll() {
     return this.prisma.user.findMany();
   }
-  
+
   async create(data: CreateUserDto) {
-  const existing = await this.findByEmail(data.email);
-  if (existing) {
-    throw new ConflictException('Email já cadastrado');
+    const existing = await this.findByEmail(data.email);
+    if (existing) {
+      throw new ConflictException('Email já cadastrado');
+    }
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    return this.prisma.user.create({
+      data: {
+        ...data,
+        password: hashedPassword,
+      },
+    });
   }
-  const hashedPassword = await bcrypt.hash(data.password, 10);
-  return this.prisma.user.create({
-    data: {
-      ...data,
-      password: hashedPassword,
-    },
-  });
-}
 }

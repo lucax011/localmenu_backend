@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/services/prismaServiceSetup';
 import { CreateOrderDto } from '../dto/createOrder.dto';
 import { UpdateOrderStatusDto } from '../dto/updateOrderStatus.dto';
@@ -9,25 +13,27 @@ export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
   async create(customerId: string, dto: CreateOrderDto) {
-    const menuItemIds = dto.items.map(i => i.menuItemId);
-    const menuItems = await this.prisma.menuItem.findMany({ where: { id: { in: menuItemIds } } });
+    const menuItemIds = dto.items.map((i) => i.menuItemId);
+    const menuItems = await this.prisma.menuItem.findMany({
+      where: { id: { in: menuItemIds } },
+    });
     if (menuItems.length !== menuItemIds.length) {
       throw new BadRequestException('Alguns itens não existem');
     }
 
     const subtotal = dto.items.reduce((acc, item) => {
-      const mi = menuItems.find(m => m.id === item.menuItemId)!;
+      const mi = menuItems.find((m) => m.id === item.menuItemId)!;
       return acc + Number(mi.price) * item.quantity;
     }, 0);
 
     const deliveryFee = 0; // pickup no MVP
     const total = subtotal + deliveryFee;
 
-    return this.prisma.$transaction(async tx => {
+    return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
           customerId,
-            restaurantId: dto.restaurantId,
+          restaurantId: dto.restaurantId,
           status: OrderStatus.PENDING,
           subtotal,
           deliveryFee,
@@ -39,8 +45,8 @@ export class OrdersService {
       });
 
       await tx.orderItem.createMany({
-        data: dto.items.map(i => {
-          const mi = menuItems.find(m => m.id === i.menuItemId)!;
+        data: dto.items.map((i) => {
+          const mi = menuItems.find((m) => m.id === i.menuItemId)!;
           return {
             orderId: order.id,
             menuItemId: mi.id,

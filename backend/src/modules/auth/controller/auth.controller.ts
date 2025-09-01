@@ -20,13 +20,13 @@ export class AuthController {
     if (!user) throw new UnauthorizedException();
     return this.authService.login(user);
   }
-  
+
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     const user = await this.userService.create(dto);
     return this.authService.login(user);
   }
-  
+
   @Post('forgot-password')
   async forgotPassword(@Body('email') email: string) {
     return this.passwordResetService.requestReset(email);

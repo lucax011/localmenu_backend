@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsNumber } from "class-validator";
+import { IsString, IsEnum, IsNumber } from 'class-validator';
 
 // menu/dto/menu-upload.dto.ts
 export class MenuUploadDto {

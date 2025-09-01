@@ -1,11 +1,18 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/services/prismaServiceSetup';
 import { UserService } from '../../users/services/user.services';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class PasswordResetService {
-  constructor(private prisma: PrismaService, private userService: UserService) {}
+  constructor(
+    private prisma: PrismaService,
+    private userService: UserService,
+  ) {}
 
   async requestReset(email: string) {
     const user = await this.userService.findByEmail(email);
@@ -19,8 +26,11 @@ export class PasswordResetService {
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const reset = await this.prisma.passwordResetToken.findUnique({ where: { token } });
-    if (!reset || reset.used) throw new BadRequestException('Token inválido ou já usado');
+    const reset = await this.prisma.passwordResetToken.findUnique({
+      where: { token },
+    });
+    if (!reset || reset.used)
+      throw new BadRequestException('Token inválido ou já usado');
     await this.userService.update(reset.userId, { password: newPassword });
     await this.prisma.passwordResetToken.update({
       where: { token },

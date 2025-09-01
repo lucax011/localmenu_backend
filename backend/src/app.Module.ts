@@ -6,11 +6,6 @@ import { OrdersModule } from './modules/orders/module/orders.module';
 // Importar futuramente: RestaurantsModule, MenusModule, PaymentsModule
 
 @Module({
-  imports: [
-    PrismaModule,
-    UserModule,
-    AuthModule,
-    OrdersModule,
-  ],
+  imports: [PrismaModule, UserModule, AuthModule, OrdersModule],
 })
 export class AppModule {}

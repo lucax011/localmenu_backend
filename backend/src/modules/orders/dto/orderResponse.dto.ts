@@ -15,7 +15,7 @@ export class OrderResponseDto {
   pickupTime?: Date;
   customerNotes?: string;
   createdAt: Date;
-  
+
   customer: UserResponseDto;
   restaurant: RestaurantResponseDto;
   items: OrderItemResponseDto[];

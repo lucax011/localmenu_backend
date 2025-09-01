@@ -20,9 +20,12 @@ export class OrderEntity {
 
   static nextStatus(current: OrderStatus): OrderStatus[] {
     switch (current) {
-      case OrderStatus.PENDING: return [OrderStatus.READY, OrderStatus.CANCELED];
-      case OrderStatus.READY: return [OrderStatus.COMPLETED];
-      default: return [];
+      case OrderStatus.PENDING:
+        return [OrderStatus.READY, OrderStatus.CANCELED];
+      case OrderStatus.READY:
+        return [OrderStatus.COMPLETED];
+      default:
+        return [];
     }
   }
 }
