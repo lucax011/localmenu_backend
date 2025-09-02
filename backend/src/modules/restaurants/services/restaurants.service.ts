@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../../prisma/services/prismaServiceSetup';
 import { CreateRestaurantDto } from '../dto/createRestaurant.dto';
 import { UpdateRestaurantDto } from '../dto/updateRestaurante.dto';
-import { CreateRestaurantHoursDto } from '../dto/CreateRestaurantHours.dto';
+import { CreateRestaurantHoursDto } from '../dto/createRestaurantHours.dto';
 
 @Injectable()
 export class RestaurantsService {
