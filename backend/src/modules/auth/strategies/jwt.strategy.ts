@@ -10,9 +10,26 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private readonly prisma: PrismaService,
     configService: ConfigService,
   ) {
+    const secret = configService.get<string>('JWT_SECRET');
+    // DEBUG TEMP (remover depois)
+    if (!secret) {
+      console.warn(
+        '[JwtStrategy] Variáveis disponíveis (subset):',
+        Object.keys(process.env).filter(
+          (k) => k.startsWith('JWT') || k.includes('SECRET'),
+        ),
+      );
+      console.warn(
+        '[JwtStrategy] Valor bruto process.env.JWT_SECRET =',
+        process.env.JWT_SECRET,
+      );
+    }
+    if (!secret) {
+      throw new Error('JWT_SECRET não definido nas variáveis de ambiente.');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: configService.get('JWT_SECRET'),
+      secretOrKey: secret,
     });
   }
 

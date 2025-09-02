@@ -12,7 +12,7 @@ import { AiModule } from './modules/ai/module/ai.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     PrismaModule,
     UserModule,
     AuthModule,

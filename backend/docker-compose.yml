@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 services:
   backend:
     image: node:20-slim
@@ -6,14 +6,14 @@ services:
     container_name: localmenu-backend-dev
     command: sh -c "npm install && npx prisma generate && npx prisma migrate dev --name init || true && npm run start:dev"
     volumes:
-      - ./backend:/app
+      - ./:/app
       - /app/node_modules
     env_file:
-      - ./backend/.env.dev
+      - ./.env
     environment:
       NODE_ENV: development
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       - postgres
     networks:
@@ -25,9 +25,9 @@ services:
     environment:
       POSTGRES_DB: localmenu
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: 172905
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - pg_data_dev:/var/lib/postgresql/data
     networks:
