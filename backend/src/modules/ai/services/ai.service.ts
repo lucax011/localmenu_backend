@@ -63,12 +63,11 @@ export class AiService {
       const { data } = await firstValueFrom(
         this.httpService.post<OcrResponse>(url, form, config),
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+
       return data?.data || [];
     } catch (err: unknown) {
       let message = 'Erro desconhecido no OCR';
       if (err instanceof AxiosError) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const errorData = err.response?.data as { message?: string };
         message = errorData?.message || err.message;
       } else if (err instanceof Error) {
