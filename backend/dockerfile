@@ -1,34 +1,20 @@
-# -------- Base (instala dependências) --------
-FROM node:20-slim AS deps
-WORKDIR /app
-# Copiar apenas manifests para cache eficiente
-COPY package.json package-lock.json* ./
-RUN npm ci
+FROM node:20-slim
 
-# -------- Build (transpila TypeScript) --------
-FROM node:20-slim AS build
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-# Copiar código fonte
+
+# Copia apenas os arquivos de dependências para instalar primeiro
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Copia o restante do código
 COPY tsconfig.json tsconfig.build.json nest-cli.json ./
 COPY prisma ./prisma
 COPY src ./src
-RUN npx prisma generate
-RUN npm run build
 
-# -------- Prod (runtime leve) --------
-FROM node:20-slim AS prod
-WORKDIR /app
-ENV NODE_ENV=production
-# Copiar somente o necessário
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/prisma ./prisma
-# Script de entrada
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Gera o Prisma Client
+RUN npx prisma generate
+
 EXPOSE 3000
-# HEALTHCHECK simples (ajuste rota conforme necessidade)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))" || exit 1
-CMD ["/entrypoint.sh"]
+
+# Comando para rodar em modo desenvolvimento (hot reload)
+CMD ["npm", "run", "start:dev"]
