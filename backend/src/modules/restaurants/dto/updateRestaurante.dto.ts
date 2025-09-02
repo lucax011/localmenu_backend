@@ -1,11 +1,8 @@
 import {
   IsString,
   IsNumber,
-  Min,
   IsOptional,
-  MinLength,
   IsEmail,
-  Max,
   IsBoolean,
 } from 'class-validator';
 

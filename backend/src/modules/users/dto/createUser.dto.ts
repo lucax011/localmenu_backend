@@ -4,7 +4,6 @@ import {
   MinLength,
   IsOptional,
   IsEnum,
-  IsBoolean,
 } from 'class-validator';
 import { UserType } from '@prisma/client'; // Corrigiremos abaixo
 

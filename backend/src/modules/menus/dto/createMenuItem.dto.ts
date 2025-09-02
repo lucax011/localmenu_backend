@@ -20,7 +20,7 @@ export class CreateMenuItemDto {
 
   @IsNumber()
   @Min(0)
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }: { value: string }) => parseFloat(value))
   price: number;
 
   @IsOptional()

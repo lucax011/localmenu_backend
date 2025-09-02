@@ -16,258 +16,224 @@ datasource db {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
 model CustomerAddress {
-  id        String   @id @default(cuid())
+  id         String          @id @default(cuid())
   customerId String
-  customer  CustomerProfile @relation(fields: [customerId], references: [id])
-  address   String
-  latitude  Float
-  longitude Float
-  createdAt DateTime @default(now())
+  customer   CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  address    String
+  latitude   Float
+  longitude  Float
+  createdAt  DateTime        @default(now())
 }
+
 model PasswordResetToken {
-  id           String   @id @default(uuid())
-  userId       String
-  token        String   @unique
-  createdAt    DateTime @default(now())
-  used         Boolean  @default(false)
-  user         User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  used      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 // Users e Autenticação
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  password    String
-  name        String
-  phone       String?
-  userType    UserType @default(CUSTOMER)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String
+  name              String
+  phone             String?
+  userType          UserType  @default(CUSTOMER)
+  isActive          Boolean   @default(true)
+  refreshTokenHash  String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   // Relacionamentos
-  customerProfile  CustomerProfile?
-  restaurantProfile RestaurantProfile?
-  orders          Order[]
-  notifications   Notification[]
-  passwordResetTokens PasswordResetToken[] 
+  customerProfile   CustomerProfile?
+  ownedRestaurants  Restaurant[]
+  orders            Order[]
+  notifications     Notification[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model CustomerProfile {
-  id       String @id @default(cuid())
-  userId   String @unique
-  user     User   @relation(fields: [userId], references: [id])
-  
+  id                  String            @id @default(cuid())
+  userId              String            @unique
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   favoriteRestaurants Restaurant[]
   addresses           CustomerAddress[]
 }
 
-model RestaurantProfile {
-  id          String @id @default(cuid())
-  userId      String @unique
-  user        User   @relation(fields: [userId], references: [id])
-  
-  restaurant  Restaurant?
-}
-
 // Restaurantes
 model Restaurant {
-  id          String  @id @default(cuid())
-  ownerId     String  @unique
-  owner       RestaurantProfile @relation(fields: [ownerId], references: [id])
-  
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   name        String
   description String?
   phone       String
   email       String?
-  cnpj        String? @unique
-  
+  cnpj        String?  @unique
   // Localização
   address     String
   latitude    Float
   longitude   Float
-  
   // Status
-  isActive    Boolean @default(true)
-  isVerified  Boolean @default(false)
-  
+  isActive    Boolean  @default(true)
+  isVerified  Boolean  @default(false)
   // Timestamps
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
   // Relacionamentos
   hours       RestaurantHours[]
   menus       Menu[]
   orders      Order[]
-  customers   CustomerProfile[]
+  favoritedBy CustomerProfile[]
 }
 
 model RestaurantHours {
-  id           String @id @default(cuid())
+  id           String     @id @default(cuid())
   restaurantId String
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  
-  dayOfWeek    Int // 0=domingo, 1=segunda...
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  dayOfWeek    DayOfWeek
   openTime     String // "08:00"
   closeTime    String // "22:00"
-  isOpen       Boolean @default(true)
+  isOpen       Boolean    @default(true)
+
+  @@unique([restaurantId, dayOfWeek])
 }
 
 // Cardápios
 model Menu {
-  id           String @id @default(cuid())
+  id           String       @id @default(cuid())
   restaurantId String
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  
-  name         String @default("Cardápio Principal")
-  isActive     Boolean @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String       @default("Cardápio Principal")
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
   categories   MenuCategory[]
-  items        MenuItem[]
   uploads      MenuUpload[]
+
+  @@unique([restaurantId, name])
 }
 
 model MenuCategory {
-  id       String @id @default(cuid())
-  menuId   String
-  menu     Menu   @relation(fields: [menuId], references: [id])
-  
-  name     String
-  order    Int    @default(0)
-  
-  items    MenuItem[]
+  id     String     @id @default(cuid())
+  menuId String
+  menu   Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  name   String
+  order  Int        @default(0)
+  items  MenuItem[]
 }
 
 model MenuItem {
-  id          String @id @default(cuid())
-  menuId      String
-  menu        Menu   @relation(fields: [menuId], references: [id])
-  categoryId  String?
-  category    MenuCategory? @relation(fields: [categoryId], references: [id])
-  
-  name        String
-  description String?
-  price       Decimal
-  isAvailable Boolean @default(true)
-  order       Int     @default(0)
-  
+  id            String           @id @default(cuid())
+  categoryId    String
+  category      MenuCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  price         Decimal
+  isAvailable   Boolean          @default(true)
+  order         Int              @default(0)
   // Metadata da IA
-  extractedById String? // Adicione este campo
-  extractedBy   AIProcessingJob? @relation(fields: [extractedById], references: [id])
-  confidence    Float?  // Confiança da IA na extração
-
-  
-  orderItems  OrderItem[]
+  extractedById String?
+  extractedBy   AIProcessingJob? @relation(fields: [extractedById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  confidence    Float? // Confiança da IA na extração
+  orderItems    OrderItem[]
 }
 
 model MenuUpload {
-  id           String @id @default(cuid())
+  id           String       @id @default(cuid())
   menuId       String
-  menu         Menu   @relation(fields: [menuId], references: [id])
-  
+  menu         Menu         @relation(fields: [menuId], references: [id], onDelete: Cascade)
   originalName String
   s3Key        String
   s3Url        String
   fileType     String // PDF, JPG, PNG
   fileSize     Int
-  
   status       UploadStatus @default(PENDING)
-  
-  createdAt    DateTime @default(now())
+  createdAt    DateTime     @default(now())
   processedAt  DateTime?
-  
   aiJob        AIProcessingJob?
 }
 
 // IA Processing
 model AIProcessingJob {
-  id           String @id @default(cuid())
-  uploadId     String @unique
-  upload       MenuUpload @relation(fields: [uploadId], references: [id])
-  
-  status       AIJobStatus @default(PENDING)
-  startedAt    DateTime?
-  completedAt  DateTime?
-  
+  id             String     @id @default(cuid())
+  uploadId       String     @unique
+  upload         MenuUpload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  status         AIJobStatus @default(PENDING)
+  startedAt      DateTime?
+  completedAt    DateTime?
   // Resultados
-  extractedText String?
+  extractedText  String?
   structuredData Json? // JSON com itens extraídos
-  confidence   Float?
-  errorMessage String?
-  
+  confidence     Float?
+  errorMessage   String?
   // Itens criados
-  createdItems MenuItem[]
+  createdItems   MenuItem[]
 }
 
 // Pedidos
 model Order {
-  id           String @id @default(cuid())
-  customerId   String
-  customer     User   @relation(fields: [customerId], references: [id])
-  restaurantId String
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  
-  orderNumber  String @unique
-  status       OrderStatus @default(PENDING)
-  
-  subtotal     Decimal
-  deliveryFee  Decimal @default(0)
-  total        Decimal
-  
+  id            String      @id @default(cuid())
+  customerId    String
+  customer      User        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  restaurantId  String
+  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Restrict)
+  orderNumber   String      @unique
+  status        OrderStatus @default(PENDING)
+  subtotal      Decimal
+  deliveryFee   Decimal     @default(0)
+  total         Decimal
   // Retirada
-  pickupTime   DateTime?
+  pickupTime    DateTime?
   customerNotes String?
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  items        OrderItem[]
-  payment      Payment?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  items         OrderItem[]
+  payment       Payment?
 }
 
 model OrderItem {
-  id         String @id @default(cuid())
-  orderId    String
-  order      Order  @relation(fields: [orderId], references: [id])
-  menuItemId String
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
-  
-  quantity   Int
-  unitPrice  Decimal
-  totalPrice Decimal
-  notes      String?
+  id           String   @id @default(cuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId   String
+  menuItem     MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+  quantity     Int
+  unitPrice    Decimal // Snapshot do preço no momento do pedido
+  totalPrice   Decimal
+  nameSnapshot String // Snapshot do nome no momento do pedido
+  notes        String?
 }
 
 // Pagamentos
 model Payment {
-  id        String @id @default(cuid())
-  orderId   String @unique
-  order     Order  @relation(fields: [orderId], references: [id])
-  
-  amount    Decimal
-  method    PaymentMethod
-  status    PaymentStatus @default(PENDING)
-  
+  id                   String        @id @default(cuid())
+  orderId              String        @unique
+  order                Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount               Decimal
+  method               PaymentMethod
+  status               PaymentStatus @default(PENDING)
   // Gateway específico
   gatewayTransactionId String?
   gatewayResponse      Json?
-  
-  createdAt DateTime @default(now())
-  paidAt    DateTime?
+  createdAt            DateTime      @default(now())
+  paidAt               DateTime?
 }
 
 // Enums
 enum UserType {
   CUSTOMER
-  RESTAURANT_OWNER
+  OWNER
+  ADMIN
 }
 
 enum UploadStatus {
@@ -306,4 +272,14 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
 }

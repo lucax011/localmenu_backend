@@ -1,11 +1,3 @@
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-  IsOptional,
-  IsEnum,
-  IsBoolean,
-} from 'class-validator';
 import { UserType } from '@prisma/client';
 
 // users/dto/user-response.dto.ts

@@ -5,10 +5,12 @@ Sistema de gestão de cardápios digitais com IA para restaurantes e clientes.
 ## 📋 Visão Geral
 
 O LocaMenu Backend é uma API REST desenvolvida em NestJS que serve duas aplicações móveis:
+
 - **App B2C**: Clientes navegam restaurantes e fazem pedidos
 - **App B2B**: Restaurantes gerenciam cardápios e pedidos
 
 ### 🏗️ Arquitetura
+
 <img width="760" height="512" alt="arquitetura" src="https://github.com/user-attachments/assets/55b105bc-413d-41c8-9f3b-fa836333b212" />
 
 ## 🚀 Tecnologias
@@ -70,3 +72,4 @@ npm run test         # Testes unitários
 npm run test:e2e     # Testes e2e
 npm run lint         # ESLint
 npm run prisma:studio # Interface visual do banco
+```

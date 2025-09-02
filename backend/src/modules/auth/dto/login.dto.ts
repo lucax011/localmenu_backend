@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsEmail, IsString } from 'class-validator';
 
 // auth/dto/login.dto.ts
 export class LoginDto {

@@ -1,11 +1,4 @@
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-  IsOptional,
-  IsEnum,
-  IsBoolean,
-} from 'class-validator';
+import { IsString, MinLength, IsOptional, IsBoolean } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -24,4 +17,6 @@ export class UpdateUserDto {
   @IsString()
   @MinLength(6)
   password?: string;
+
+  refreshTokenHash?: string;
 }

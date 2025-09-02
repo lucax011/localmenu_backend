@@ -1,4 +1,10 @@
-import { IsString, MinLength, IsOptional, IsNumber } from 'class-validator';
+import {
+  IsString,
+  MinLength,
+  IsOptional,
+  IsNumber,
+  Min,
+} from 'class-validator';
 
 // menu/dto/create-menu-category.dto.ts
 export class CreateMenuCategoryDto {
@@ -7,6 +13,11 @@ export class CreateMenuCategoryDto {
   name: string;
 
   @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
   @IsNumber()
-  order?: number = 0;
+  @Min(0)
+  sortOrder?: number;
 }

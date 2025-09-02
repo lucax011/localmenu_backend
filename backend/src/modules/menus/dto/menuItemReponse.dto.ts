@@ -6,6 +6,8 @@ export class MenuItemResponseDto {
   price: number;
   isAvailable: boolean;
   order?: number;
+  imageUrl?: string;
+  categoryId: string;
   createdAt: Date;
   updatedAt: Date;
 }

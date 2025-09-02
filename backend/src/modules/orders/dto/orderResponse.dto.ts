@@ -1,5 +1,5 @@
 // orders/dto/order-response.dto.ts
-import { OrderStatus } from '../entities/enumEntityOrder.dto';
+import { OrderStatus } from '@prisma/client';
 import { UserResponseDto } from '../../users/dto/userResponse.dto';
 import { RestaurantResponseDto } from '../../restaurants/dto/restauranteResponse.dto';
 import { OrderItemResponseDto } from './orderItemResponse.dto';
