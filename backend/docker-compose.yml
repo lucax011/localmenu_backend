@@ -1,10 +1,10 @@
 version: '3.9'
 services:
   backend:
-    image: node:20-slim
+    build: .
     working_dir: /app
     container_name: localmenu-backend-dev
-    command: sh -c "npm install && npx prisma generate && npx prisma migrate dev --name init || true && npm run start:dev"
+    # command: sh -c "npx prisma migrate deploy && npm run start:dev"
     volumes:
       - ./:/app
       - /app/node_modules
