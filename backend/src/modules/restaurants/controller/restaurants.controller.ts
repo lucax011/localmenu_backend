@@ -18,7 +18,7 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { CurrentUser } from '../../auth/decorators/currentUser.decorator';
 import { User, UserType } from '@prisma/client';
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { CreateRestaurantHoursDto } from '../dto/createRestaurantHours.dto';
+import { CreateRestaurantHoursDto } from '../dto/CreateRestaurantHours.dto';
 
 @ApiTags('Restaurants')
 @Controller('restaurants')
