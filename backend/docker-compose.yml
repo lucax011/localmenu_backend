@@ -25,7 +25,7 @@ services:
     environment:
       POSTGRES_DB: localmenu
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 172905
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - '5432:5432'
     volumes:

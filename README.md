@@ -1,75 +1,72 @@
-# 🍽️ LocaMenu - Backend API
+# LocalMenu: Backend API
 
-Sistema de gestão de cardápios digitais com IA para restaurantes e clientes.
+API do **LocalMenu**, uma plataforma de cardápios digitais com IA para restaurantes e clientes. Ela atende dois apps móveis:
 
-## 📋 Visão Geral
+- **App B2C:** clientes navegam pelos restaurantes e fazem pedidos
+- **App B2B:** restaurantes gerenciam cardápios e pedidos, inclusive importando o cardápio por foto (OCR)
 
-O LocaMenu Backend é uma API REST desenvolvida em NestJS que serve duas aplicações móveis:
+## Ecossistema LocalMenu
 
-- **App B2C**: Clientes navegam restaurantes e fazem pedidos
-- **App B2B**: Restaurantes gerenciam cardápios e pedidos
+| Repositório | Papel |
+| --- | --- |
+| **localmenu_backend** (este) | API NestJS + PostgreSQL |
+| [localmenu_frontendB2C](https://github.com/lucax011/localmenu_frontendB2C) | App do cliente (Expo) |
+| [localmenu_frontendB2B](https://github.com/lucax011/localmenu_frontendB2B) | App do restaurante (Expo) |
+| [localmenu_OCRservice](https://github.com/lucax011/localmenu_OCRservice) | Microsserviço de OCR em Python (FastAPI) |
 
-### 🏗️ Arquitetura
+## Arquitetura
 
 <img width="760" height="512" alt="arquitetura" src="https://github.com/user-attachments/assets/55b105bc-413d-41c8-9f3b-fa836333b212" />
 
-## 🚀 Tecnologias
+## Stack
 
-- **Framework**: NestJS + TypeScript
-- **Banco**: PostgreSQL (Aurora) + Prisma ORM
-- **Autenticação**: JWT + Refresh Tokens
-- **Upload**: AWS S3
-- **IA**: Microserviço Python (OCR + NLP)
-- **Cache**: Redis (futuro)
-- **Logs**: Winston + CloudWatch
-- **Containerização**: Docker
+- NestJS 11 + TypeScript
+- PostgreSQL 16 + Prisma ORM
+- Autenticação JWT com refresh token e recuperação de senha
+- Upload de arquivos com Multer; extração de cardápio pelo serviço de OCR
+- Docker e Docker Compose
 
-## 📦 Instalação
+## Como rodar
+
+Com Docker (sobe a API e o Postgres, e roda as migrações):
 
 ```bash
-# Clone o repositório
-git clone <repo-url>
-cd locamenu-backend
+cd backend
+cp .env.example .env      # preencha JWT_SECRET e JWT_REFRESH_SECRET
+docker compose up --build # API em http://localhost:3000
+```
 
-# Instale as dependências
+Sem Docker (Postgres local, com `localhost` no `DATABASE_URL`):
+
+```bash
+cd backend
 npm install
-
-# Configure as variáveis de ambiente
 cp .env.example .env
-
-# Execute as migrações do banco
 npx prisma migrate dev
-
-# Inicie o servidor de desenvolvimento
 npm run start:dev
-🗄️ Estrutura do Projeto
-src/
-├── auth/           # Autenticação JWT
-├── users/          # Gestão de usuários
-├── restaurants/    # CRUD restaurantes
-├── menus/          # Gestão de cardápios
-├── menu-items/     # Itens do cardápio
-├── orders/         # Sistema de pedidos
-├── payments/       # Integração pagamentos
-├── ai/             # Integração com IA
-├── uploads/        # Upload de arquivos
-├── common/         # Middlewares, guards, etc.
-└── prisma/         # Schema e migrações
-🔐 Variáveis de Ambiente
+```
 
-DATABASE_URL="postgresql://..."
-JWT_SECRET="..."
-JWT_REFRESH_SECRET="..."
-AWS_ACCESS_KEY_ID="..."
-AWS_SECRET_ACCESS_KEY="..."
-AWS_S3_BUCKET="..."
-AI_SERVICE_URL="http://localhost:8000"
-📚 Scripts Disponíveis
+## Módulos e rotas
 
-npm run start:dev    # Desenvolvimento
-npm run build        # Build produção
-npm run test         # Testes unitários
-npm run test:e2e     # Testes e2e
-npm run lint         # ESLint
-npm run prisma:studio # Interface visual do banco
+| Módulo | Rotas principais |
+| --- | --- |
+| `auth` | `POST /auth/register`, `/auth/login`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password`; `GET /auth/profile` |
+| `users` | `GET /users/:id`, `PATCH /users/:id` |
+| `restaurants` | `GET /restaurants/me`, `GET`/`PATCH /restaurants/:id`, horários em `/restaurants/:restaurantId/hours` |
+| `menus` | cardápios, categorias e itens em `/menus` |
+| `orders` | `GET /orders/me`, `GET /orders/restaurant/:restaurantId`, `PATCH /orders/:id/status` |
+| `payments` | `GET /payments/:orderId`, `POST /payments/webhook/success` |
+| `uploads` | `POST /uploads/ocr` (envia a foto do cardápio ao OCR) |
+| `ai` | `POST /ai/extract-from-url` |
+
+Modelos no Prisma: `User`, `CustomerProfile`, `CustomerAddress`, `Restaurant`, `RestaurantHours`, `Menu`, `MenuCategory`, `MenuItem`, `MenuUpload`, `AIProcessingJob`, `Order`, `OrderItem`, `Payment`, `Notification` e `PasswordResetToken`.
+
+## Scripts
+
+```bash
+npm run start:dev   # desenvolvimento com watch
+npm run build       # build de produção
+npm run test        # testes unitários
+npm run test:e2e    # testes e2e
+npm run lint        # ESLint
 ```
