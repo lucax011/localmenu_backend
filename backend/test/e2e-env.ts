@@ -7,3 +7,5 @@ export const TEST_DATABASE_URL =
 process.env.DATABASE_URL = TEST_DATABASE_URL;
 process.env.JWT_SECRET = 'segredo-so-para-testes';
 process.env.JWT_REFRESH_SECRET = 'outro-segredo-so-para-testes';
+// os testes fazem muitos logins seguidos
+process.env.AUTH_RATE_LIMIT = '1000';

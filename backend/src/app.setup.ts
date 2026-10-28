@@ -1,10 +1,21 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as express from 'express';
+import helmet from 'helmet';
 import { join } from 'path';
 import { PlainNumbersInterceptor } from './modules/common/interceptors/plainNumbers.interceptor';
 
 // Configuração comum ao servidor (main.ts) e aos testes e2e
 export function configureApp(app: INestApplication) {
+  // Cabeçalhos de segurança. A API só devolve JSON, então a CSP fica desligada
+  // (ela quebraria a página do Swagger em /docs). As fotos de /static são lidas
+  // pelos apps em outra origem, por isso a política de recurso é cross-origin.
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
+
   // Só os apps locais (Expo Web) podem chamar a API pelo navegador
   const origins = (
     process.env.CORS_ORIGINS || 'http://localhost:8081,http://localhost:19006'

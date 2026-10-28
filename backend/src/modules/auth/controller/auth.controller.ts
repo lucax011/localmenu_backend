@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { LoginDto } from '../dto/login.dto';
 import { AuthService } from '../services/auth.service';
 import { PasswordResetService } from '../services/passwordReset.service';
@@ -22,6 +23,8 @@ import { User } from '@prisma/client';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Auth')
+// Cada IP tem um número limitado de tentativas por minuto (contra força bruta de senha)
+@UseGuards(ThrottlerGuard)
 @Controller('auth')
 export class AuthController {
   constructor(
