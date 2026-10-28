@@ -6,6 +6,7 @@ import {
   Min,
   IsBoolean,
 } from 'class-validator';
+import { IsImageUrl } from '../../common/validators/imageUrl';
 import { Transform } from 'class-transformer';
 
 // menu/dto/create-menu-item.dto.ts
@@ -17,6 +18,9 @@ export class CreateMenuItemDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsImageUrl()
+  imageUrl?: string | null;
 
   @IsNumber()
   @Min(0)

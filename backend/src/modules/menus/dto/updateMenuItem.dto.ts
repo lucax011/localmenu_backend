@@ -5,6 +5,7 @@ import {
   Min,
   IsBoolean,
 } from 'class-validator';
+import { IsImageUrl } from '../../common/validators/imageUrl';
 
 export class UpdateMenuItemDto {
   @IsOptional()
@@ -14,6 +15,9 @@ export class UpdateMenuItemDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsImageUrl()
+  imageUrl?: string | null;
 
   @IsOptional()
   @IsNumber()
