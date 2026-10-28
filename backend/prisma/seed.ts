@@ -141,11 +141,11 @@ const photo = (id: string) =>
 const PHOTOS: Record<string, { cover: string; items: Record<string, string> }> =
   {
     'brasa-burger': {
-      cover: photo('1550547660-d9450f859349'),
+      cover: photo('1568901346375-23c9450c58cd'),
       items: {
         'Brasa Clássico': photo('1571091718767-18b5b1457add'),
         'Brasa Bacon': photo('1586190848861-99aa4a171e90'),
-        'Duplo Smash': photo('1568901346375-23c9450c58cd'),
+        'Duplo Smash': photo('1550547660-d9450f859349'),
         'Veggie da Horta': photo('1520072959219-c595dc870360'),
         'Batata rústica': photo('1573080496219-bb080dd4f877'),
         'Onion rings': photo('1639024471283-03518883512d'),
