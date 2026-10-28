@@ -63,6 +63,34 @@ Senha `localmenu123` para todas (só valem no banco local):
 | `kaze@localmenu.dev` | dono do Sushi Kaze |
 | `cliente@localmenu.dev` | cliente |
 
+### Subir tudo: API, OCR e os dois apps
+
+Os quatro repositórios clonados lado a lado:
+
+```bash
+mkdir LocalMenu && cd LocalMenu
+git clone https://github.com/lucax011/localmenu_backend
+git clone https://github.com/lucax011/localmenu_OCRservice
+git clone https://github.com/lucax011/localmenu_frontendB2B
+git clone https://github.com/lucax011/localmenu_frontendB2C
+
+# 1. Banco, OCR e API
+cd localmenu_backend/backend
+cp .env.example .env          # preencha JWT_SECRET e JWT_REFRESH_SECRET
+docker compose up --build -d
+
+# 2. App do restaurante: http://localhost:8081
+cd ../../localmenu_frontendB2B
+npm install && npm run web
+
+# 3. App do cliente: http://localhost:8082 (outro terminal)
+cd ../localmenu_frontendB2C
+npm install && npm run web
+```
+
+Os apps também ficam presos a `127.0.0.1`. Faça um pedido no app do cliente (`cliente@localmenu.dev`)
+e acompanhe no painel do restaurante (`dono@localmenu.dev`).
+
 ## Módulos e rotas
 
 | Módulo | Rotas principais |
@@ -81,6 +109,15 @@ restaurante, itens com pedidos não podem ser apagados (409), e o status do pedi
 avança pelas transições válidas.
 
 Modelos no Prisma: `User`, `CustomerProfile`, `CustomerAddress`, `Restaurant`, `RestaurantHours`, `Menu`, `MenuCategory`, `MenuItem`, `MenuUpload`, `AIProcessingJob`, `Order`, `OrderItem`, `Payment`, `Notification` e `PasswordResetToken`.
+
+## Segurança
+
+- Senhas com bcrypt; refresh token guardado só como hash.
+- Rotas de autenticação limitadas a 10 tentativas por minuto por IP (`AUTH_RATE_LIMIT`); depois respondem 429.
+- Cabeçalhos do `helmet` (`nosniff`, sem `X-Powered-By`).
+- CORS fechado nas origens de `CORS_ORIGINS` (os apps em 8081 e 8082).
+- Uploads: só JPEG ou PNG, até 10 MB, salvos com nome aleatório.
+- `JWT_SECRET` e `JWT_REFRESH_SECRET` não têm valor padrão: sem eles a API não sobe.
 
 ## Scripts
 
