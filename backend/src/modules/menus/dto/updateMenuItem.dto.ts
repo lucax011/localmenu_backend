@@ -24,7 +24,12 @@ export class UpdateMenuItemDto {
   @IsBoolean()
   isAvailable?: boolean;
 
+  // mover para outra categoria do mesmo cardápio
   @IsOptional()
   @IsString()
-  imageUrl?: string;
+  categoryId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  order?: number;
 }

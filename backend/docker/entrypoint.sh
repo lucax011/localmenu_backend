@@ -1,18 +1,21 @@
 #!/bin/sh
 set -e
 
-echo "Running database migrations (deploy)..."
+echo "Aplicando migrações..."
 npx prisma migrate deploy
 
-echo "Generating Prisma Client (skip download if already cached)..."
-npx prisma generate --skip-download || true
+echo "Gerando o Prisma Client..."
+npx prisma generate
+
+echo "Dados de exemplo (só na primeira vez)..."
+npx prisma db seed
 
 if [ "$NODE_ENV" = "development" ]; then
-  echo "Starting Nest in watch mode..."
+  echo "Iniciando a API em modo watch..."
   exec npm run start:dev
 else
-  echo "Building application..."
+  echo "Compilando..."
   npm run build
-  echo "Starting application (prod)..."
+  echo "Iniciando a API..."
   exec node dist/main.js
 fi

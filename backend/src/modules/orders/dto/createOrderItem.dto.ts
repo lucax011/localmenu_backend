@@ -1,12 +1,13 @@
 // orders/dto/create-order-item.dto.ts
-import { IsString, IsNumber, Min, IsOptional } from 'class-validator';
+import { IsString, IsInt, Min, Max, IsOptional } from 'class-validator';
 
 export class CreateOrderItemDto {
   @IsString()
   menuItemId: string;
 
-  @IsNumber()
+  @IsInt()
   @Min(1)
+  @Max(50)
   quantity: number;
 
   @IsOptional()

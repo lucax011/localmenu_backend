@@ -63,7 +63,7 @@ export class AuthController {
   @ApiBearerAuth()
   @Get('profile')
   getProfile(@CurrentUser() user: User) {
-    return this.userService.findById(user.id);
+    return this.userService.findSafeById(user.id);
   }
 
   @Post('forgot-password')

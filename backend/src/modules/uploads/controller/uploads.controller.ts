@@ -9,44 +9,19 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { randomUUID } from 'crypto';
+import { User, UserType } from '@prisma/client';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { UploadsService } from '../services/uploads.service';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../../common/guards/jwtAuth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
-import { UserType } from '@prisma/client';
 import { CurrentUser } from '../../auth/decorators/currentUser.decorator';
-import { User } from '@prisma/client';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { OcrUploadDto } from '../dto/ocrUpload.dto';
-import { Request } from 'express';
 
-const imageFileFilter = (
-  _req: Request,
-  file: Express.Multer.File,
-  callback: (error: Error | null, acceptFile: boolean) => void,
-) => {
-  if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-    return callback(
-      new BadRequestException('Only image files are allowed!'),
-      false,
-    );
-  }
-  callback(null, true);
-};
-
-const editFileName = (
-  _req: Request,
-  file: Express.Multer.File,
-  callback: (error: Error | null, filename: string) => void,
-) => {
-  const name = file.originalname.split('.')[0];
-  const fileExtName = extname(file.originalname);
-  const randomName = Array(4)
-    .fill(null)
-    .map(() => Math.round(Math.random() * 16).toString(16))
-    .join('');
-  callback(null, `${name}-${randomName}${fileExtName}`);
+const EXTENSIONS: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
 };
 
 @ApiTags('Uploads')
@@ -55,21 +30,24 @@ export class UploadsController {
   constructor(private readonly uploadsService: UploadsService) {}
 
   @Post('ocr')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.OWNER)
   @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: 'Menu Image and Restaurant ID',
-    type: OcrUploadDto,
-  })
+  @ApiBody({ type: OcrUploadDto })
   @UseInterceptors(
     FileInterceptor('file', {
+      // nome aleatório: o nome enviado pelo usuário nunca vira caminho no disco
       storage: diskStorage({
         destination: './uploads',
-        filename: editFileName,
+        filename: (_req, file, cb) =>
+          cb(null, `${randomUUID()}${EXTENSIONS[file.mimetype]}`),
       }),
-      fileFilter: imageFileFilter,
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) =>
+        EXTENSIONS[file.mimetype]
+          ? cb(null, true)
+          : cb(new BadRequestException('Envie uma foto JPEG ou PNG.'), false),
     }),
   )
   async ocrUpload(
@@ -77,14 +55,14 @@ export class UploadsController {
     @Body() body: OcrUploadDto,
     @CurrentUser() user: User,
   ) {
-    if (!file) {
-      throw new BadRequestException('File is required');
-    }
-    return await this.uploadsService.processMenuWithOCR(
-      file.path,
+    if (!file)
+      throw new BadRequestException(
+        'Envie a foto do cardápio no campo "file".',
+      );
+    return this.uploadsService.processMenuWithOCR(
+      file,
       body.restaurantId,
       user,
-      body.menuName,
     );
   }
 }

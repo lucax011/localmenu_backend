@@ -1,93 +1,90 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as path from 'path';
-import * as fs from 'fs';
-// CORREÇÃO: Ajustando o caminho de importação para um local mais provável.
+import { AIJobStatus, UploadStatus, User } from '@prisma/client';
 import { PrismaService } from '../../prisma/services/prismaServiceSetup';
 import { AiService } from '../../ai/services/ai.service';
-import { User } from '@prisma/client';
+import { MenusService } from '../../menus/services/menus.service';
 
+// Importação por foto, em duas etapas:
+// 1. aqui: guarda a foto, roda o OCR e devolve os itens lidos (nada entra no cardápio)
+// 2. o dono revisa no app e publica em POST /menus/:menuId/import
 @Injectable()
 export class UploadsService {
-  private baseDir = path.resolve(process.cwd(), 'uploads');
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiService: AiService,
-  ) {
-    if (!fs.existsSync(this.baseDir)) {
-      fs.mkdirSync(this.baseDir, { recursive: true });
-    }
-  }
-
-  buildFileUrl(filename: string) {
-    return `/static/${filename}`; // Ex: servir via middleware express static
-  }
-
-  async saveBuffer(originalName: string, buffer: Buffer) {
-    const ext = path.extname(originalName) || '.bin';
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-    const full = path.join(this.baseDir, name);
-    await fs.promises.writeFile(full, buffer);
-    return { filename: name, path: full, url: this.buildFileUrl(name) };
-  }
+    private readonly menusService: MenusService,
+  ) {}
 
   async processMenuWithOCR(
-    filePath: string,
+    file: Express.Multer.File,
     restaurantId: string,
     user: User,
-    menuName: string,
   ) {
-    const restaurant = await this.prisma.restaurant.findUnique({
-      where: { id: restaurantId },
-    });
+    await this.menusService.ensureRestaurantOwner(restaurantId, user.id);
+    const menu = await this.menusService.mainMenu(restaurantId);
 
-    if (!restaurant || restaurant.ownerId !== user.id) {
-      throw new NotFoundException(
-        `Restaurant with ID ${restaurantId} not found or you don't have permission.`,
-      );
-    }
-
-    // 1. Criar ou encontrar o menu
-    const menu = await this.prisma.menu.upsert({
-      where: {
-        // CORREÇÃO: A sintaxe para índice composto é um objeto aninhado.
-        restaurantId_name: {
-          restaurantId,
-          name: menuName,
-        },
-      },
-      update: {},
-      create: {
-        restaurantId,
-        name: menuName,
-      },
-    });
-
-    // 2. Criar o registro de upload
-    const menuUpload = await this.prisma.menuUpload.create({
+    const upload = await this.prisma.menuUpload.create({
       data: {
         menuId: menu.id,
-        // CORREÇÃO: O schema não tem 'filePath'. Os campos são 's3Key', 's3Url', etc.
-        // Ajuste conforme sua lógica para salvar o arquivo.
-        originalName: path.basename(filePath),
-        s3Key: filePath, // ou a chave do S3
-        s3Url: this.buildFileUrl(path.basename(filePath)),
-        fileType: path.extname(filePath),
-        fileSize: fs.statSync(filePath).size,
-        status: 'PENDING',
+        originalName: file.originalname.slice(0, 200),
+        s3Key: file.path, // armazenamento local nesta fase (sem nuvem)
+        s3Url: `/static/${path.basename(file.path)}`,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        status: UploadStatus.PROCESSING,
+        aiJob: {
+          create: { status: AIJobStatus.PROCESSING, startedAt: new Date() },
+        },
       },
+      include: { aiJob: true },
     });
 
-    // 3. Iniciar o processamento de IA
-    void this.aiService
-      .extractMenuFromImage(filePath)
-      .catch((err) =>
-        console.error(`OCR processing failed for ${filePath}:`, err),
+    try {
+      const result = await this.aiService.extractMenuFromImage(
+        file.path,
+        file.mimetype,
       );
-
-    return {
-      message: 'Upload received and processing started.',
-      uploadId: menuUpload.id,
-    };
+      const confidence = result.items.length
+        ? result.items.reduce((acc, i) => acc + i.confidence, 0) /
+          result.items.length
+        : null;
+      await this.prisma.menuUpload.update({
+        where: { id: upload.id },
+        data: {
+          status: UploadStatus.COMPLETED,
+          processedAt: new Date(),
+          aiJob: {
+            update: {
+              status: AIJobStatus.COMPLETED,
+              completedAt: new Date(),
+              structuredData: result.items as object[],
+              confidence,
+            },
+          },
+        },
+      });
+      return {
+        uploadId: upload.id,
+        menuId: menu.id,
+        imageUrl: upload.s3Url,
+        items: result.items,
+      };
+    } catch (err) {
+      await this.prisma.menuUpload.update({
+        where: { id: upload.id },
+        data: {
+          status: UploadStatus.FAILED,
+          aiJob: {
+            update: {
+              status: AIJobStatus.FAILED,
+              completedAt: new Date(),
+              errorMessage: err instanceof Error ? err.message : String(err),
+            },
+          },
+        },
+      });
+      throw err;
+    }
   }
 }

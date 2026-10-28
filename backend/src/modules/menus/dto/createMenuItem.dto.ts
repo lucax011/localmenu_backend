@@ -23,9 +23,8 @@ export class CreateMenuItemDto {
   @Transform(({ value }: { value: string }) => parseFloat(value))
   price: number;
 
-  @IsOptional()
   @IsString()
-  categoryId?: string;
+  categoryId: string;
 
   @IsOptional()
   @IsBoolean()

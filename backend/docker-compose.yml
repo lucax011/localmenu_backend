@@ -1,23 +1,8 @@
-version: '3.9'
+# Ambiente de desenvolvimento completo: banco, OCR e API.
+# As portas ficam presas a 127.0.0.1: nada fica acessível fora deste computador.
+# O serviço de OCR é construído a partir do repositório vizinho localmenu_OCRservice
+# (clone os dois na mesma pasta, ou ajuste OCR_SERVICE_PATH no .env).
 services:
-  backend:
-    build: .
-    working_dir: /app
-    container_name: localmenu-backend-dev
-    # command: sh -c "npx prisma migrate deploy && npm run start:dev"
-    volumes:
-      - ./:/app
-      - /app/node_modules
-    env_file:
-      - ./.env
-    environment:
-      NODE_ENV: development
-    ports:
-      - '3000:3000'
-    depends_on:
-      - postgres
-    networks:
-      - localmenu-net
   postgres:
     image: postgres:16-alpine
     container_name: localmenu-postgres-dev
@@ -27,13 +12,47 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5433}:5432'
     volumes:
       - pg_data_dev:/var/lib/postgresql/data
-    networks:
-      - localmenu-net
-networks:
-  localmenu-net:
-    driver: bridge
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d localmenu']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  ocr:
+    build: ${OCR_SERVICE_PATH:-../../localmenu_OCRservice}
+    container_name: localmenu-ocr-dev
+    restart: unless-stopped
+    environment:
+      EXTRACTOR_ENGINE: tesseract
+    ports:
+      - '127.0.0.1:8000:8000'
+
+  backend:
+    build: .
+    container_name: localmenu-backend-dev
+    working_dir: /app
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/localmenu?schema=public
+      AI_SERVICE_URL: http://ocr:8000
+      CHOKIDAR_USEPOLLING: 'true'
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - uploads_dev:/app/uploads
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ocr:
+        condition: service_started
+
 volumes:
   pg_data_dev:
+  uploads_dev:

@@ -5,23 +5,12 @@ export class OcrUploadDto {
   @ApiProperty({
     type: 'string',
     format: 'binary',
-    description: 'Image file of the menu',
+    description: 'Foto do cardápio (JPEG ou PNG, até 10 MB)',
   })
   file: any;
 
-  @ApiProperty({
-    description: 'The ID of the restaurant this menu belongs to',
-    example: 'clq8k2x2f0000c8s6g6g6g6g6',
-  })
+  @ApiProperty({ description: 'Restaurante dono do cardápio' })
   @IsNotEmpty()
   @IsString()
   restaurantId: string;
-
-  @ApiProperty({
-    description: 'The name for the new menu being created',
-    example: 'Lunch Menu',
-  })
-  @IsNotEmpty()
-  @IsString()
-  menuName: string;
 }

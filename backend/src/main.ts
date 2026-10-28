@@ -1,26 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.Module';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as express from 'express';
-import { join } from 'path';
+import { configureApp } from './app.setup';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = configureApp(await NestFactory.create(AppModule));
 
-  // Enable CORS
-  app.enableCors();
-
-  // Global Pipes
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-
-  // Serve Static Files
-  app.use('/static', express.static(join(process.cwd(), 'uploads')));
-
-  // Swagger Setup
+  // Documentação interativa em /docs
   const config = new DocumentBuilder()
-    .setTitle('LocaMenu API')
-    .setDescription('API para o sistema de cardápios e pedidos LocaMenu')
+    .setTitle('LocalMenu API')
+    .setDescription(
+      'API do LocalMenu: cardápios digitais e pedidos para retirada',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .build();

@@ -26,38 +26,59 @@ API do **LocalMenu**, uma plataforma de cardápios digitais com IA para restaura
 - Upload de arquivos com Multer; extração de cardápio pelo serviço de OCR
 - Docker e Docker Compose
 
-## Como rodar
+## Como rodar (desenvolvimento local)
 
-Com Docker (sobe a API e o Postgres, e roda as migrações):
+O `docker compose` sobe o Postgres, o serviço de OCR e a API. Ele espera o repositório
+`localmenu_OCRservice` clonado ao lado deste (ou o caminho em `OCR_SERVICE_PATH`):
+
+```
+LocalMenu/
+├── localmenu_backend/      (este)
+└── localmenu_OCRservice/
+```
 
 ```bash
 cd backend
-cp .env.example .env      # preencha JWT_SECRET e JWT_REFRESH_SECRET
-docker compose up --build # API em http://localhost:3000
+cp .env.example .env      # preencha JWT_SECRET e JWT_REFRESH_SECRET com valores aleatórios
+docker compose up --build
 ```
 
-Sem Docker (Postgres local, com `localhost` no `DATABASE_URL`):
+| Serviço | Endereço |
+| --- | --- |
+| API | http://localhost:3000 (Swagger em `/docs`) |
+| OCR | http://localhost:8000 |
+| Postgres | localhost:5433 |
 
-```bash
-cd backend
-npm install
-cp .env.example .env
-npx prisma migrate dev
-npm run start:dev
-```
+Todas as portas ficam presas em `127.0.0.1`. Ao subir, o container aplica as migrações
+(`prisma migrate deploy`) e roda o seed, que cria dados de exemplo só na primeira vez.
+
+### Contas de exemplo
+
+Senha `localmenu123` para todas (só valem no banco local):
+
+| Conta | Papel |
+| --- | --- |
+| `dono@localmenu.dev` | dono da Brasa Burger (com 6 pedidos de exemplo) |
+| `nonna@localmenu.dev` | dona da Cantina da Nonna |
+| `kaze@localmenu.dev` | dono do Sushi Kaze |
+| `cliente@localmenu.dev` | cliente |
 
 ## Módulos e rotas
 
 | Módulo | Rotas principais |
 | --- | --- |
-| `auth` | `POST /auth/register`, `/auth/login`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password`; `GET /auth/profile` |
-| `users` | `GET /users/:id`, `PATCH /users/:id` |
-| `restaurants` | `GET /restaurants/me`, `GET`/`PATCH /restaurants/:id`, horários em `/restaurants/:restaurantId/hours` |
-| `menus` | cardápios, categorias e itens em `/menus` |
-| `orders` | `GET /orders/me`, `GET /orders/restaurant/:restaurantId`, `PATCH /orders/:id/status` |
-| `payments` | `GET /payments/:orderId`, `POST /payments/webhook/success` |
-| `uploads` | `POST /uploads/ocr` (envia a foto do cardápio ao OCR) |
-| `ai` | `POST /ai/extract-from-url` |
+| `auth` | `POST /auth/register` (só CUSTOMER ou OWNER), `/auth/login`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password`; `GET /auth/profile` |
+| `users` | `GET /users/me`, `PATCH /users/me` |
+| `public` | sem login: `GET /public/restaurants`, `GET /public/r/:slug` (restaurante, horários e cardápio) |
+| `restaurants` | `GET /restaurants/me`, `GET`/`PATCH /restaurants/:id`, horários em `/restaurants/:restaurantId/hours`, `GET /restaurants/:id/report?days=7` |
+| `menus` | só o dono: `GET`/`POST /menus/:restaurantId`, categorias (`/menus/category/...`), itens (`/menus/item/...`) e `POST /menus/:menuId/import` (itens revisados do OCR) |
+| `uploads` | `POST /uploads/ocr` (foto JPEG/PNG até 10 MB; devolve os itens lidos para revisão) |
+| `orders` | `POST /orders`, `GET /orders/me`, `GET /orders/:id`, `GET /orders/restaurant/:restaurantId`, `PATCH /orders/:id/status` |
+| `payments` | pagamento **simulado**: `POST /payments` marca o pedido como pago e confirmado; `GET /payments/:orderId` |
+
+Regras importantes: preços dos pedidos vêm sempre do banco, o dono só mexe no próprio
+restaurante, itens com pedidos não podem ser apagados (409), e o status do pedido só
+avança pelas transições válidas.
 
 Modelos no Prisma: `User`, `CustomerProfile`, `CustomerAddress`, `Restaurant`, `RestaurantHours`, `Menu`, `MenuCategory`, `MenuItem`, `MenuUpload`, `AIProcessingJob`, `Order`, `OrderItem`, `Payment`, `Notification` e `PasswordResetToken`.
 
@@ -67,6 +88,10 @@ Modelos no Prisma: `User`, `CustomerProfile`, `CustomerAddress`, `Restaurant`, `
 npm run start:dev   # desenvolvimento com watch
 npm run build       # build de produção
 npm run test        # testes unitários
-npm run test:e2e    # testes e2e
+npm run test:e2e    # testes e2e (jornadas do dono e do cliente)
 npm run lint        # ESLint
 ```
+
+Os testes e2e usam o banco `localmenu_test` no Postgres do compose (porta 5433).
+Eles só aplicam migrações, nunca apagam o banco, e cada execução cria dados com
+nomes únicos, então podem rodar várias vezes. O OCR é simulado nos testes.
