@@ -24,6 +24,21 @@ const EXTENSIONS: Record<string, string> = {
   'image/png': '.png',
 };
 
+// nome aleatório: o nome enviado pelo usuário nunca vira caminho no disco
+const photoUpload = (maxMb: number) =>
+  FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './uploads',
+      filename: (_req, file, cb) =>
+        cb(null, `${randomUUID()}${EXTENSIONS[file.mimetype]}`),
+    }),
+    limits: { fileSize: maxMb * 1024 * 1024 },
+    fileFilter: (_req, file, cb) =>
+      EXTENSIONS[file.mimetype]
+        ? cb(null, true)
+        : cb(new BadRequestException('Envie uma foto JPEG ou PNG.'), false),
+  });
+
 @ApiTags('Uploads')
 @Controller('uploads')
 export class UploadsController {
@@ -35,21 +50,7 @@ export class UploadsController {
   @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: OcrUploadDto })
-  @UseInterceptors(
-    FileInterceptor('file', {
-      // nome aleatório: o nome enviado pelo usuário nunca vira caminho no disco
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_req, file, cb) =>
-          cb(null, `${randomUUID()}${EXTENSIONS[file.mimetype]}`),
-      }),
-      limits: { fileSize: 10 * 1024 * 1024 },
-      fileFilter: (_req, file, cb) =>
-        EXTENSIONS[file.mimetype]
-          ? cb(null, true)
-          : cb(new BadRequestException('Envie uma foto JPEG ou PNG.'), false),
-    }),
-  )
+  @UseInterceptors(photoUpload(10))
   async ocrUpload(
     @UploadedFile() file: Express.Multer.File,
     @Body() body: OcrUploadDto,
@@ -64,5 +65,17 @@ export class UploadsController {
       body.restaurantId,
       user,
     );
+  }
+
+  // Foto de prato, logo ou capa. Devolve o endereço para salvar no item ou no restaurante.
+  @Post('image')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserType.OWNER)
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(photoUpload(5))
+  imageUpload(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Envie a foto no campo "file".');
+    return { url: `/static/${file.filename}` };
   }
 }

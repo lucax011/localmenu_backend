@@ -18,6 +18,17 @@ export class PublicService {
         description: true,
         address: true,
         phone: true,
+        logoUrl: true,
+        coverUrl: true,
+        hours: {
+          orderBy: { dayOfWeek: 'asc' },
+          select: {
+            dayOfWeek: true,
+            openTime: true,
+            closeTime: true,
+            isOpen: true,
+          },
+        },
         menus: {
           where: { isActive: true },
           orderBy: { createdAt: 'asc' },
@@ -42,6 +53,8 @@ export class PublicService {
         description: true,
         address: true,
         phone: true,
+        logoUrl: true,
+        coverUrl: true,
         hours: {
           orderBy: { dayOfWeek: 'asc' },
           select: {
@@ -75,6 +88,7 @@ export class PublicService {
                 description: true,
                 price: true,
                 isAvailable: true,
+                imageUrl: true,
               },
             },
           },

@@ -189,6 +189,53 @@ describe('LocalMenu (e2e)', () => {
       expect(edited.body.price).toBe(27.5); // número, não texto
     });
 
+    it('envia foto e põe no item e na capa do restaurante', async () => {
+      const png = Buffer.from('89504e470d0a1a0a', 'hex');
+      const up = await http
+        .post('/uploads/image')
+        .set(auth(owner))
+        .attach('file', png, {
+          filename: 'prato.png',
+          contentType: 'image/png',
+        })
+        .expect(201);
+      expect(up.body.url).toMatch(/^\/static\/[0-9a-f-]{36}\.png$/);
+
+      const item = await http
+        .patch(`/menus/item/${burgerId}`)
+        .set(auth(owner))
+        .send({ imageUrl: up.body.url })
+        .expect(200);
+      expect(item.body.imageUrl).toBe(up.body.url);
+
+      await http
+        .patch(`/restaurants/${restaurantId}`)
+        .set(auth(owner))
+        .send({ coverUrl: 'https://cdn.exemplo.com/capa.jpg' })
+        .expect(200);
+
+      // só https ou arquivo enviado: nada de javascript: nem caminho solto
+      for (const bad of [
+        'javascript:alert(1)',
+        'http://x.com/a.jpg',
+        '/static/../.env',
+      ]) {
+        await http
+          .patch(`/menus/item/${burgerId}`)
+          .set(auth(owner))
+          .send({ imageUrl: bad })
+          .expect(400);
+      }
+
+      // cliente não envia foto
+      const curioso = await register('curioso', 'CUSTOMER');
+      await http
+        .post('/uploads/image')
+        .set(auth(curioso))
+        .attach('file', png, { filename: 'p.png', contentType: 'image/png' })
+        .expect(403);
+    });
+
     it('outro dono não mexe no cardápio de ninguém', async () => {
       await http
         .patch(`/menus/item/${burgerId}`)
@@ -266,7 +313,12 @@ describe('LocalMenu (e2e)', () => {
       expect(page.body.restaurant.name).toBe(`Lanchonete do Zé ${RUN}`);
       expect(page.body.menu.categories).toHaveLength(3);
       const pratos = page.body.menu.categories[0].items;
-      expect(pratos.find((i) => i.name === 'Prato feito').price).toBe(27.5);
+      const prato = pratos.find((i) => i.name === 'Prato feito');
+      expect(prato.price).toBe(27.5);
+      expect(prato.imageUrl).toMatch(/^\/static\//);
+      expect(page.body.restaurant.coverUrl).toBe(
+        'https://cdn.exemplo.com/capa.jpg',
+      );
       // item pausado aparece, marcado como indisponível
       expect(pratos.find((i) => i.name === 'Feijoada').isAvailable).toBe(false);
 

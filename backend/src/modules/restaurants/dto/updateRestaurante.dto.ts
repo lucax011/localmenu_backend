@@ -5,6 +5,7 @@ import {
   IsEmail,
   IsBoolean,
 } from 'class-validator';
+import { IsImageUrl } from '../../common/validators/imageUrl';
 
 // restaurants/dto/update-restaurant.dto.ts
 export class UpdateRestaurantDto {
@@ -15,6 +16,12 @@ export class UpdateRestaurantDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsImageUrl()
+  logoUrl?: string | null;
+
+  @IsImageUrl()
+  coverUrl?: string | null;
 
   @IsOptional()
   @IsString()

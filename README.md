@@ -100,13 +100,15 @@ e acompanhe no painel do restaurante (`dono@localmenu.dev`).
 | `public` | sem login: `GET /public/restaurants`, `GET /public/r/:slug` (restaurante, horários e cardápio) |
 | `restaurants` | `GET /restaurants/me`, `GET`/`PATCH /restaurants/:id`, horários em `/restaurants/:restaurantId/hours`, `GET /restaurants/:id/report?days=7` |
 | `menus` | só o dono: `GET`/`POST /menus/:restaurantId`, categorias (`/menus/category/...`), itens (`/menus/item/...`) e `POST /menus/:menuId/import` (itens revisados do OCR) |
-| `uploads` | `POST /uploads/ocr` (foto JPEG/PNG até 10 MB; devolve os itens lidos para revisão) |
+| `uploads` | `POST /uploads/ocr` (foto JPEG/PNG até 10 MB; devolve os itens lidos para revisão), `POST /uploads/image` (foto de prato, logo ou capa, até 5 MB; devolve a URL) |
 | `orders` | `POST /orders`, `GET /orders/me`, `GET /orders/:id`, `GET /orders/restaurant/:restaurantId`, `PATCH /orders/:id/status` |
 | `payments` | pagamento **simulado**: `POST /payments` marca o pedido como pago e confirmado; `GET /payments/:orderId` |
 
 Regras importantes: preços dos pedidos vêm sempre do banco, o dono só mexe no próprio
 restaurante, itens com pedidos não podem ser apagados (409), e o status do pedido só
 avança pelas transições válidas.
+
+Fotos: `MenuItem.imageUrl`, `Restaurant.logoUrl` e `Restaurant.coverUrl` aceitam só `https://…` ou um arquivo enviado por `/uploads/image`. O seed põe fotos de exemplo (Unsplash) e deixa alguns itens sem foto de propósito.
 
 Modelos no Prisma: `User`, `CustomerProfile`, `CustomerAddress`, `Restaurant`, `RestaurantHours`, `Menu`, `MenuCategory`, `MenuItem`, `MenuUpload`, `AIProcessingJob`, `Order`, `OrderItem`, `Payment`, `Notification` e `PasswordResetToken`.
 

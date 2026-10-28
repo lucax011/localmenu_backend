@@ -1,5 +1,5 @@
 // Dados de exemplo para desenvolvimento local (npx prisma db seed).
-// Só roda uma vez: se a conta do dono de exemplo já existir, não faz nada.
+// Só cria os dados uma vez: se a conta do dono de exemplo já existir, só confere as fotos.
 //
 // Contas de exemplo (senha localmenu123, só para o ambiente local):
 //   dono@localmenu.dev     dono da Brasa Burger (app B2B)
@@ -133,6 +133,68 @@ const RESTAURANTS: {
   },
 ];
 
+// Fotos de exemplo (Unsplash). Itens sem foto ficam assim de propósito:
+// o app precisa ficar bom também quando o restaurante não mandou foto.
+const photo = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?w=640&q=70&auto=format&fit=crop`;
+
+const PHOTOS: Record<string, { cover: string; items: Record<string, string> }> =
+  {
+    'brasa-burger': {
+      cover: photo('1550547660-d9450f859349'),
+      items: {
+        'Brasa Clássico': photo('1571091718767-18b5b1457add'),
+        'Brasa Bacon': photo('1586190848861-99aa4a171e90'),
+        'Duplo Smash': photo('1568901346375-23c9450c58cd'),
+        'Veggie da Horta': photo('1520072959219-c595dc870360'),
+        'Batata rústica': photo('1573080496219-bb080dd4f877'),
+        'Onion rings': photo('1639024471283-03518883512d'),
+        'Milk-shake de doce de leite': photo('1572490122747-3968b75cc699'),
+        'Suco de laranja': photo('1600271886742-f049cd451bba'),
+      },
+    },
+    'cantina-da-nonna': {
+      cover: photo('1414235077428-338989a2e8c0'),
+      items: {
+        'Spaghetti à carbonara': photo('1612874742237-6526221588e3'),
+        'Lasanha à bolonhesa': photo('1574894709920-11b28e7367e3'),
+        Tiramisù: photo('1571877227200-a0d98ea607e9'),
+      },
+    },
+    'sushi-kaze': {
+      cover: photo('1553621042-f6e147245754'),
+      items: {
+        'Combinado 20 peças': photo('1611143669185-af224c5e3252'),
+        'Combinado salmão 12 peças': photo('1579871494447-9811cf80d66c'),
+        'Yakisoba de legumes': photo('1585032226651-759b368d7246'),
+        'Guioza (6 un.)': photo('1496116218417-1a781b1c416c'),
+      },
+    },
+  };
+
+// Põe as fotos onde ainda não há foto. Roda sempre, então bancos criados
+// antes das fotos também recebem, e uma foto trocada pelo dono não é sobrescrita.
+async function applyPhotos() {
+  for (const [slug, p] of Object.entries(PHOTOS)) {
+    const restaurant = await prisma.restaurant.findUnique({ where: { slug } });
+    if (!restaurant) continue;
+    await prisma.restaurant.updateMany({
+      where: { id: restaurant.id, coverUrl: null },
+      data: { coverUrl: p.cover },
+    });
+    for (const [name, imageUrl] of Object.entries(p.items)) {
+      await prisma.menuItem.updateMany({
+        where: {
+          name,
+          imageUrl: null,
+          category: { menu: { restaurantId: restaurant.id } },
+        },
+        data: { imageUrl },
+      });
+    }
+  }
+}
+
 const WEEK: DayOfWeek[] = [
   DayOfWeek.TUESDAY,
   DayOfWeek.WEDNESDAY,
@@ -146,7 +208,8 @@ async function main() {
   if (
     await prisma.user.findUnique({ where: { email: 'dono@localmenu.dev' } })
   ) {
-    console.log('Seed: dados de exemplo já existem, nada a fazer.');
+    await applyPhotos();
+    console.log('Seed: dados de exemplo já existem; fotos conferidas.');
     return;
   }
   const password = await bcrypt.hash(PASSWORD, 10);
@@ -307,6 +370,7 @@ async function main() {
       },
     });
   }
+  await applyPhotos();
   console.log('Seed: 3 restaurantes, 4 contas e 6 pedidos de exemplo criados.');
 }
 
