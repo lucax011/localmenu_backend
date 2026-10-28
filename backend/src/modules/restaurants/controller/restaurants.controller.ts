@@ -41,6 +41,20 @@ export class RestaurantsController {
     return this.service.myRestaurants(user.id);
   }
 
+  @Get(':id/report')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserType.OWNER)
+  @ApiBearerAuth()
+  @ApiQuery({ name: 'days', required: false, type: Number })
+  report(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Query('days') days?: string,
+  ) {
+    const n = Math.min(365, Math.max(1, parseInt(days ?? '30', 10) || 30));
+    return this.service.report(id, user.id, n);
+  }
+
   @Get(':id')
   getPublic(@Param('id') id: string) {
     return this.service.findPublic(id);

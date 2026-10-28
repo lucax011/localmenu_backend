@@ -1,29 +1,27 @@
-import { Controller, Post, Body, Get, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { User } from '@prisma/client';
 import { UserService } from '../services/user.services';
-import { CreateUserDto } from '../dto/createUser.dto';
-import { UpdateUserDto } from '../dto/updateUser.dto';
+import { UpdateMeDto } from '../dto/updateMe.dto';
+import { JwtAuthGuard } from '../../common/guards/jwtAuth.guard';
+import { CurrentUser } from '../../auth/decorators/currentUser.decorator';
 
+// Cada usuário só vê e altera o próprio perfil. Não há listagem de usuários.
+@ApiTags('Users')
 @Controller('users')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @Post()
-  async create(@Body() dto: CreateUserDto) {
-    return this.userService.create(dto);
+  @Get('me')
+  me(@CurrentUser() user: User) {
+    return this.userService.findSafeById(user.id);
   }
 
-  @Get(':id')
-  async findById(@Param('id') id: string) {
-    return this.userService.findById(id);
-  }
-
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.userService.update(id, dto);
-  }
-
-  @Get()
-  async findAll() {
-    return this.userService.findAll();
+  @Patch('me')
+  async updateMe(@CurrentUser() user: User, @Body() dto: UpdateMeDto) {
+    await this.userService.update(user.id, dto);
+    return this.userService.findSafeById(user.id);
   }
 }

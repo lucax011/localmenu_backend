@@ -38,6 +38,13 @@ export class OrdersController {
     return this.service.listByCustomer(user.id);
   }
 
+  @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles(UserType.CUSTOMER)
+  findMine(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.service.findForCustomer(id, user.id);
+  }
+
   @Get('restaurant/:restaurantId')
   @UseGuards(RolesGuard)
   @Roles(UserType.OWNER)

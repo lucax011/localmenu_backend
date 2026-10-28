@@ -75,6 +75,7 @@ model Restaurant {
   ownerId     String
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   name        String
+  slug        String   @unique // endereço público: /public/r/<slug>
   description String?
   phone       String
   email       String?
